@@ -13,9 +13,9 @@ from chat_research import published, parse_bundle, trends, growth, request_text
 
 def render_research(store, state, sample_mode):
     theme()
-    hero('내 투자의 현재를 한눈에', '관심 있는 기업을 담고, 판단에 필요한 변화만 확인하세요.', 'PLANX · STOCK RESEARCH')
+    hero('내 투자의 현재를 한눈에', '관심 종목을 모아두고, 필요한 정보와 변화를 한곳에서 확인하세요.', 'PLANX · STOCK RESEARCH')
     if sample_mode:
-        st.info('둘러보기 중입니다. 개인 목록을 저장하려면 먼저 대시보드 비밀번호를 설정하세요.')
+        st.info('현재 둘러보기 모드입니다. 내 종목을 저장하려면 대시보드 비밀번호를 먼저 설정하세요.')
     else:
         with st.expander('＋ 종목 추가', expanded=not state.get('stocks')):
             with st.form('research_manual'):
@@ -25,24 +25,24 @@ def render_research(store, state, sample_mode):
                 if st.form_submit_button('내 목록에 추가'):
                     import re
                     if not name.strip() or (code and not re.fullmatch(r'[0-9]{6}', code)):
-                        st.error('종목명과 숫자 6자리 코드를 확인하세요. 코드는 생략할 수 있습니다.')
+                        st.error('종목명을 입력하고, 종목코드를 넣었다면 숫자 6자리인지 확인하세요. 종목코드는 생략해도 됩니다.')
                     else:
                         known = next((s for s in state.get('stocks', []) if s['name'].strip().casefold() == name.strip().casefold()), {})
                         identity = known.get('code') or code or 'pending-' + hashlib.sha256(name.strip().casefold().encode()).hexdigest()[:16]
                         try:
                             store.save_stock({'code':identity, 'name':name.strip(), 'kind':known.get('kind','관심')})
                             st.rerun()
-                        except Exception: st.error('목록 저장에 실패했습니다. 저장 공간 설정을 확인하세요.')
+                        except Exception: st.error('목록을 저장하지 못했습니다. 저장 공간 설정을 확인하세요.')
     research = published()
     for r in state.get('chat_research', []):
         if r['code'] not in research or r['as_of'] >= research[r['code']]['as_of']: research[r['code']] = r
     stocks = {s['code']:s for s in state.get('stocks', [])}
     for p in st.session_state.get('account_snapshot', {}).get('positions', []):
         stocks[p['code']] = {**stocks.get(p['code'], {}), 'code':p['code'], 'name':p['name']}
-    with st.expander('조사 요청 · 최신 내용으로 업데이트'):
-        st.write('① 종목을 추가하거나 포트폴리오에서 계좌를 불러옵니다. ② 아래 요청문을 복사해 지금 대화창에 보냅니다. ③ 조사 결과가 반영되면 이 화면을 새로고침합니다.')
+    with st.expander('최신 조사 내용 가져오기'):
+        st.write('① 종목을 추가하거나 계좌에서 보유종목을 불러오세요. ② 아래 요청문을 복사해 이 채팅에 보내세요. ③ 조사가 끝난 뒤 이 화면에서 결과를 다시 읽으면 최신 내용이 표시됩니다.')
         st.code(request_text(list(stocks.values())), language=None)
-        st.caption('요청문에는 종목명만 포함됩니다. 이 채팅에 요청문을 보내야 조사가 시작됩니다.')
+        st.caption('요청문에는 종목명만 들어갑니다. 요청문을 이 채팅에 보내야 조사가 시작됩니다.')
         if st.button('반영된 조사 결과 다시 읽기'): st.rerun()
         if not sample_mode:
             with st.expander('조사 파일 가져오기 · 고급'):
@@ -61,9 +61,9 @@ def render_research(store, state, sample_mode):
                     except Exception: st.error('저장에 실패했습니다. 기존 결과는 유지했습니다.')
     if not stocks:
         with st.container(border=True):
-            st.subheader('첫 관심종목을 담아보세요')
-            st.write('위의 종목 추가를 열고 기업 이름 하나만 입력하면 시작할 수 있습니다.')
-            st.caption('계좌가 있다면 왼쪽 계좌 연결에서 보유종목을 가져올 수도 있습니다.')
+            st.subheader('첫 관심종목을 추가해보세요')
+            st.write('위의 ‘종목 추가’를 열고 기업 이름만 입력하면 시작할 수 있습니다.')
+            st.caption('계좌를 연결했다면 왼쪽 ‘계좌 연결’ 메뉴에서 보유종목을 가져올 수도 있습니다.')
         return
     rows, details = [], {}
     for key, stock in stocks.items():
@@ -88,12 +88,12 @@ def render_research(store, state, sample_mode):
     selected = st.selectbox('자세히 볼 종목', list(details), format_func=lambda k:stocks[k]['name'], key='research_selected')
     stock, r, trend, frame = details[selected]
     if not r:
-        st.info('이 종목의 채팅 조사 결과가 아직 없습니다. 위 요청문을 대화창에 보내면 조사 결과를 채울 수 있습니다.')
+        st.info('아직 이 종목의 조사 결과가 없습니다. 위의 ‘최신 조사 내용 가져오기’를 열고 요청문을 이 채팅에 보내세요.')
         if stock.get('report'):
             st.write('기존 공식 결산 분석: ' + brief(stock['report'])['summary'])
         return
     st.subheader(stock['name'])
-    st.caption('조사일 ' + r['as_of'] + ' · 각 표의 자료 기간은 아래에 별도 표시합니다. 실시간 분석이 아닙니다.')
+    st.caption('조사일 ' + r['as_of'] + ' · 자료마다 기준 기간이 다를 수 있어 각 표 아래에 기간을 표시합니다. 실시간 자료는 아닙니다.')
     detail(r)
     summary = r.get('summary')
     if summary:
