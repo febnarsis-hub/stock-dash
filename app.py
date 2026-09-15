@@ -236,9 +236,9 @@ if latest:
 if st.session_state.get("force_nav"):
     st.session_state.nav_choice = st.session_state.pop("force_nav")
 
-NAV_ITEMS = ["내 종목", "계좌 연결", "교육자료", "설정"]
-legacy = {"통합 분석":"내 종목", "홈":"내 종목", "AI 인사이트":"내 종목", "관심 종목":"내 종목", "포트폴리오":"계좌 연결"}
-current = st.session_state.get("nav_choice", "내 종목")
+NAV_ITEMS = ["대시보드", "내 종목", "계좌 연결", "교육자료", "설정"]
+legacy = {"통합 분석":"내 종목", "홈":"대시보드", "AI 인사이트":"내 종목", "관심 종목":"내 종목", "포트폴리오":"계좌 연결"}
+current = st.session_state.get("nav_choice", "대시보드")
 if current not in NAV_ITEMS:
     st.session_state.nav_choice = legacy.get(current, "설정")
     if current not in legacy:
@@ -322,73 +322,94 @@ def global_search():
 
 def render_home():
     hero(
-        "시장을 읽고, 더 나은 판단을 만듭니다.",
-        "공시·재무·시세를 한 흐름으로 연결하고, 새 기관 API가 추가될수록 시장·수급·산업 분석이 확장됩니다.",
+        "내 투자 대시보드",
+        "시장 숫자를 억지로 채우지 않고, 지금 가진 종목·분석·공시를 먼저 한 화면에서 확인합니다.",
+        "DASHBOARD",
     )
     global_search()
 
-    st.subheader("시장 스냅샷")
-    cols = st.columns(4)
-    market_cards = [
-        ("KOSPI", "데이터 연결 필요", "market.index"),
-        ("KOSDAQ", "데이터 연결 필요", "market.index"),
-        ("외국인 수급", "데이터 연결 필요", "market.investor_flow"),
-        ("원/달러", "데이터 연결 필요", "macro.fx"),
-    ]
-    for col, (title, value, cap) in zip(cols, market_cards):
-        with col:
-            card(title, value, f"필요 Capability · {cap}")
+    real_stocks = [item for item in choices.values() if item.get("code") != "SAMPLE"]
+    analyzed = [item for item in real_stocks if item.get("report")]
+    holdings = [item for item in real_stocks if item.get("kind") == "보유"]
+    latest_times = [item.get("analyzed_at", "") for item in analyzed if item.get("analyzed_at")]
+    latest_at = max(latest_times) if latest_times else ""
 
-    left, right = st.columns([2, 1])
+    st.subheader("내 현황")
+    summary_cols = st.columns(4)
+    summary_cols[0].metric("저장 종목", f"{len(real_stocks)}개")
+    summary_cols[1].metric("분석 완료", f"{len(analyzed)}개")
+    summary_cols[2].metric("보유 종목", f"{len(holdings)}개")
+    summary_cols[3].metric("최근 분석", latest_at[:10] if latest_at else "없음")
+
+    st.subheader("현재 선택 종목")
+    if report:
+        result = brief(report)
+        fair = result.get("fair")
+        focus = st.columns(4)
+        with focus[0]:
+            price = report.get("price")
+            card("기준 종가", f"{price:,.0f}원" if isinstance(price, (int, float)) else "자료 부족", report.get("price_date", "기준일 확인 필요"))
+        with focus[1]:
+            card("성장", result.get("growth", "자료 부족"), "수집된 결산 기준")
+        with focus[2]:
+            card("가치 상태", result.get("value", "자료 부족"), "기존 분석 로직 기준")
+        with focus[3]:
+            fair_value = f"{fair['base']:,.0f}원" if fair else "자료 부족"
+            gap = f"현재 대비 {fair['gap']:+.1f}%" if fair and fair.get("gap") is not None else "비교 자료 부족"
+            card("적정가 참고", fair_value, gap)
+        st.caption(f"{stock_label(stock)} · 데이터 기준 {report.get('basis', '확인 필요')}")
+    else:
+        empty_state("아직 분석된 종목이 없습니다", "위 검색에서 종목을 분석하면 이 영역에 가격·성장·가치 상태가 표시됩니다.")
+
+    left, right = st.columns([1.45, 1])
     with left:
         with st.container(border=True):
-            st.subheader("주요 지수 추이")
-            empty_state(
-                "시장 시계열 API 연결 대기",
-                "지수 API가 연결되면 KOSPI·KOSDAQ과 주요 시장 흐름을 이 영역에 표시합니다. 가상 지수는 넣지 않습니다.",
-            )
+            st.subheader("내 종목")
+            if real_stocks:
+                rows = []
+                for item in real_stocks:
+                    item_report = item.get("report") or {}
+                    item_brief = item.get("automatic_brief") or (brief(item_report) if item_report else {})
+                    fair = item_brief.get("fair") if item_brief else None
+                    price = item_report.get("price")
+                    rows.append({
+                        "종목": item.get("name", ""),
+                        "구분": item.get("kind", "관심"),
+                        "기준 종가": f"{price:,.0f}원" if isinstance(price, (int, float)) else "자료 부족",
+                        "적정가 참고": f"{fair['base']:,.0f}원" if fair else "자료 부족",
+                        "상태": "분석 완료" if item_report else "분석 필요",
+                        "최근 분석": item.get("analyzed_at", "")[:10] or "-",
+                    })
+                st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+            else:
+                empty_state("저장된 종목이 없습니다", "내 종목에서 관심 종목을 추가하거나 위 검색으로 첫 분석을 시작하세요.")
+
     with right:
         with st.container(border=True):
-            st.subheader("오늘의 주요 변화")
+            st.subheader("최근 공시")
             if report and not is_demo:
                 notices = sorted(report.get("disclosures", []), key=lambda x: x.get("date", ""), reverse=True)
                 if notices:
-                    for item in notices[:4]:
+                    for item in notices[:5]:
                         st.link_button(item["date"] + " · " + item["title"], item["url"], use_container_width=True)
                 else:
                     st.caption("선택 종목의 최근 공시가 수집되지 않았습니다.")
             else:
-                empty_state("종목을 검색해 시작", "검색 후 선택 종목의 최신 공시와 핵심 변화를 여기에 모읍니다.")
+                empty_state("공시 자료 없음", "종목 분석을 실행하면 수집된 공식 공시를 이곳에서 확인할 수 있습니다.")
 
-    st.subheader("내 분석 포커스")
-    if report:
-        result = brief(report)
-        fair = result.get("fair")
-        cols = st.columns(4)
-        with cols[0]:
-            card("현재 선택", stock["name"], stock_label(stock))
-        with cols[1]:
-            card("성장", result["growth"], "확정 결산 기반")
-        with cols[2]:
-            card("가치 상태", result["value"], "역사적 배수 참고")
-        with cols[3]:
-            value = f"{fair['base']:,.0f}원" if fair else "자료 부족"
-            card("적정가 참고", value, "목표주가가 아닌 참고값")
-    else:
-        empty_state("아직 분석된 종목이 없습니다", "상단 검색에서 종목을 선택하면 기업·재무·공시 분석이 저장됩니다.")
+    st.subheader("다음 확인")
+    next_cols = st.columns(3)
+    with next_cols[0]:
+        missing = [item for item in real_stocks if not item.get("report")]
+        card("분석이 필요한 종목", f"{len(missing)}개", "내 종목에서 선택해 최신 분석")
+    with next_cols[1]:
+        pending = [item for item in real_stocks if str(item.get("code", "")).startswith("pending-")]
+        card("코드 확인 대기", f"{len(pending)}개", "종목코드 확인 후 분석 가능")
+    with next_cols[2]:
+        caps = active_capabilities()
+        card("데이터 연결", f"{len(caps)}개 활성", "설정 → 데이터 연결 관리")
 
-    st.subheader("확장 준비")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        card("상승률 TOP", "API 연결 대기", "market ranking")
-    with c2:
-        card("거래대금 TOP", "API 연결 대기", "market turnover")
-    with c3:
-        ai = stock.get("ai_brief", {})
-        if ai.get("status") == "ok":
-            card("AI 인사이트", "분석 준비됨", "수집 데이터 해설")
-        else:
-            card("AI 인사이트", "선택 기능", "OPENAI API 연결 시 활성화")
+    st.caption("시장 지수·환율·수급 등은 해당 기관 API가 연결되기 전까지 임의 숫자를 표시하지 않습니다.")
 
 
 def render_market():
@@ -717,7 +738,9 @@ def render_placeholder(title, subtitle, required):
                 st.caption(cap)
 
 
-if nav == "내 종목":
+if nav == "대시보드":
+    render_home()
+elif nav == "내 종목":
     render_research(store, state, sample_mode)
 elif nav == "계좌 연결":
     render_portfolio(store, sample_mode)
