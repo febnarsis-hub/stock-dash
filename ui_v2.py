@@ -48,11 +48,11 @@ html, body, [class*="css"] {
   color: var(--text);
 }
 .block-container {
-  max-width: 1440px;
-  padding: 1.2rem 2rem 3.5rem;
+  max-width: 1520px;
+  padding: 1.05rem 1.7rem 3.5rem;
 }
 header[data-testid="stHeader"] {
-  background: rgba(244,248,251,.92);
+  background: rgba(244,248,251,.94);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(220,230,237,.7);
 }
@@ -111,6 +111,7 @@ p, li { line-height: 1.55; }
 }
 [data-testid="stMetricLabel"] { color: var(--muted); font-size: 12px; }
 [data-testid="stMetricValue"] { color: var(--text); font-weight: 800; }
+[data-testid="stMetricDelta"] { font-weight: 700; }
 [data-testid="stVerticalBlockBorderWrapper"] {
   border: 1px solid var(--line) !important;
   border-radius: 14px !important;
@@ -259,26 +260,17 @@ hr { border-color: var(--line) !important; }
 .planx-status-wait { color:#966D19; background:#FFF8E8; border-color:#F1DCA1; }
 .planx-status-bad { color:#B44755; background:var(--red-soft); border-color:#F0C3C9; }
 
-/* Dashboard visual helpers */
-.planx-section-title {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin: 2px 0 9px;
+/* Reference dashboard rhythm */
+[data-testid="stHorizontalBlock"] { align-items: stretch; }
+[data-testid="stHorizontalBlock"] > div { min-width: 0; }
+[data-testid="stVerticalBlockBorderWrapper"] h3 { margin-bottom: .35rem; }
+[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stMetric"] {
+  box-shadow: none;
+  border-color: var(--line-soft);
 }
-.planx-section-title strong { font-size:16px; color:#1B3955; }
-.planx-section-title span { font-size:10px; color:#8A9BAA; }
-.planx-kpi-up { color:var(--green); font-weight:750; }
-.planx-kpi-down { color:var(--red); font-weight:750; }
-.planx-chip {
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:7px;
-  background:#EEF5FF;
-  color:#3D70B7;
-  font-size:10px;
-  font-weight:700;
-  margin-right:5px;
+[data-testid="stDataFrame"] { background:#fff; }
+.stPlotlyChart, [data-testid="stVegaLiteChart"], [data-testid="stArrowVegaLiteChart"] {
+  border-radius: 12px;
 }
 
 @media (max-width: 900px) {
