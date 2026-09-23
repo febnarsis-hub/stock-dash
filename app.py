@@ -35,6 +35,7 @@ try:
         "SUPABASE_SERVICE_ROLE_KEY",
         "DATA_GO_KR_SERVICE_KEY",
         "DART_CRTFC_KEY",
+        "KRX_AUTH_KEY",
         "OPENAI_API_KEY",
         "OPENAI_MODEL",
         "KIS_ENV", "KIS_APP_KEY", "KIS_APP_SECRET", "KIS_CANO", "KIS_ACNT_PRDT_CD",
