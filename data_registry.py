@@ -31,6 +31,12 @@ PROVIDERS = (
         ("DART_CRTFC_KEY",),
     ),
     ProviderSpec(
+        "krx_stock",
+        "KRX 유가증권 일별매매정보",
+        ("stock.month_end_market_cap",),
+        ("KRX_AUTH_KEY",),
+    ),
+    ProviderSpec(
         "data_go_kr_stock",
         "금융위원회 주식시세정보",
         ("stock.search", "stock.quote"),
@@ -88,6 +94,21 @@ def health(spec: ProviderSpec) -> dict:
                 "800": "기관 점검 중",
             }
             return _result(spec.provider_id, "error", known.get(code, f"응답코드 {code or '확인 필요'}"), started)
+
+        if spec.provider_id == "krx_stock":
+            # A fixed trading day keeps the check independent of holidays and publication lag.
+            # This checks the KOSPI daily-trading service approval, not KOSDAQ approval.
+            response = requests.get(
+                "https://data-dbg.krx.co.kr/svc/apis/sto/stk_bydd_trd",
+                params={"basDd": "20250102"},
+                headers={"AUTH_KEY": os.getenv("KRX_AUTH_KEY", "").strip()},
+                timeout=(5, 12),
+            )
+            response.raise_for_status()
+            payload = response.json()
+            if isinstance(payload, dict) and isinstance(payload.get("OutBlock_1"), list) and payload["OutBlock_1"]:
+                return _result(spec.provider_id, "ok", "유가증권 일별매매정보 인증·응답 정상 (코스닥 별도 확인 필요)", started)
+            return _result(spec.provider_id, "error", "응답 자료 없음 · 개별 API 활용 승인 또는 응답 형식 확인 필요", started)
 
         if spec.provider_id == "data_go_kr_stock":
             key = unquote(os.getenv("DATA_GO_KR_SERVICE_KEY", "").strip())
