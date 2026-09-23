@@ -23,16 +23,16 @@ def apply_theme():
         """
 <style>
 :root {
-  --bg: #F4F8FB;
+  --bg: #F3F6F8;
   --surface: #FFFFFF;
   --surface-soft: #F8FBFD;
-  --sidebar: #EDF4F8;
+  --sidebar: #14283B;
   --line: #DCE6ED;
   --line-soft: #E9F0F4;
-  --text: #18324D;
+  --text: #172D3E;
   --muted: #71859A;
-  --blue: #2F6FDB;
-  --blue-soft: #EAF2FF;
+  --blue: #176C84;
+  --blue-soft: #E2F3F5;
   --green: #16A37D;
   --green-soft: #EAF8F3;
   --red: #DE6271;
@@ -52,7 +52,7 @@ html, body, [class*="css"] {
   padding: 1.05rem 1.7rem 3.5rem;
 }
 header[data-testid="stHeader"] {
-  background: rgba(244,248,251,.94);
+  background: rgba(243,246,248,.94);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(220,230,237,.7);
 }
@@ -60,7 +60,7 @@ header[data-testid="stHeader"] {
 /* Sidebar */
 section[data-testid="stSidebar"] {
   background: var(--sidebar);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid #294459;
 }
 section[data-testid="stSidebar"] > div {
   padding: 1.1rem .8rem 1rem;
@@ -71,24 +71,29 @@ section[data-testid="stSidebar"] > div {
   min-height: 42px;
   padding: .62rem .75rem;
   border-radius: 10px;
-  color: #47647F;
+  color: #B6C8D4;
   transition: all .15s ease;
 }
 [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:hover {
-  background: #E3EDF4;
+  background: #203B51;
 }
 [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label:has(input:checked) {
-  background: #DDEBFF;
-  color: #245FBD;
+  background: #27576A;
+  color: #FFFFFF;
   font-weight: 750;
-  box-shadow: inset 3px 0 #4B83E6;
+  box-shadow: inset 3px 0 #58C7C9;
 }
 [data-testid="stSidebar"] .stRadio div[role="radiogroup"] label p {
   font-size: 14px;
 }
 [data-testid="stSidebar"] .stSelectbox label,
 [data-testid="stSidebar"] .stCaptionContainer,
-[data-testid="stSidebar"] p { color: #668099; }
+[data-testid="stSidebar"] p { color: #A9BFCE; }
+
+/* Sidebar controls and separators */
+section[data-testid="stSidebar"] hr { border-color: #355064 !important; }
+section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p { color: #B8CBD6; }
+section[data-testid="stSidebar"] .stButton > button { border-color: #426075; color: #E8F4F5; background: #203D52; }
 
 /* Typography */
 h1, h2, h3, h4 {
@@ -165,7 +170,7 @@ hr { border-color: var(--line) !important; }
   display:flex;
   align-items:center;
   justify-content:center;
-  background: linear-gradient(145deg,#2F6FDB,#67A0F0);
+  background: linear-gradient(145deg,#176C84,#44B5AF);
   color:#fff;
   font-size:21px;
   font-weight:800;
@@ -175,18 +180,18 @@ hr { border-color: var(--line) !important; }
   font-size:19px;
   line-height:1.1;
   font-weight:820;
-  color:#173653;
+  color:#F1F8FA;
   letter-spacing:-.035em;
 }
 .planx-brand-sub {
   font-size:10px;
-  color:#7C91A5;
+  color:#9CB7C8;
   margin-top:4px;
 }
 
 /* Hero */
 .planx-hero {
-  background: linear-gradient(135deg,#FFFFFF 0%,#F8FBFD 62%,#EEF5FC 100%);
+  background: linear-gradient(120deg,#FFFFFF 0%,#F6FBFA 65%,#E5F2F1 100%);
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 22px 25px;
@@ -194,7 +199,7 @@ hr { border-color: var(--line) !important; }
   box-shadow: 0 5px 18px rgba(49,79,105,.04);
 }
 .planx-eyebrow {
-  color:#5D7EA1;
+  color:#168091;
   font-size:10px;
   font-weight:800;
   letter-spacing:.11em;
@@ -210,6 +215,12 @@ hr { border-color: var(--line) !important; }
   color:#6B8195;
   font-size:13px;
 }
+
+/* Dashboard section rhythm */
+.block-container > div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"]:has(h2) { margin-top: .75rem; }
+[data-testid="stVerticalBlockBorderWrapper"] { padding: .2rem; }
+[data-testid="stMetricValue"] { font-variant-numeric: tabular-nums; }
+.stCaptionContainer p { font-size: .78rem; }
 
 /* Reusable cards */
 .planx-card {
@@ -228,7 +239,7 @@ hr { border-color: var(--line) !important; }
 }
 .planx-card-value {
   font-size:24px;
-  color:#19344F;
+  color:#173C4C;
   font-weight:820;
   letter-spacing:-.035em;
   font-variant-numeric: tabular-nums;
