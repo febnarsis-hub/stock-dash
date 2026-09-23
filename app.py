@@ -456,7 +456,7 @@ def render_settings():
             left, right = st.columns([2, 5])
             with left:
                 st.subheader(spec.name)
-                source_badge("정상" if check and check["status"] == "ok" else "인증정보 필요" if check and check["status"] == "not_configured" else "진단 전", "ok" if check and check["status"] == "ok" else "wait")
+                source_badge("정상" if check and check["status"] == "ok" else "인증정보 필요" if check and check["status"] == "not_configured" else "연결 오류" if check and check["status"] == "error" else "진단 전", "ok" if check and check["status"] == "ok" else "bad" if check and check["status"] == "error" else "wait")
             with right:
                 st.write(" · ".join(spec.capabilities))
                 if check:
