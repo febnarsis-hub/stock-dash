@@ -33,7 +33,7 @@ PROVIDERS = (
     ProviderSpec(
         "krx_stock",
         "KRX 유가증권 일별매매정보",
-        ("stock.month_end_market_cap",),
+        ("stock.krx_daily_diagnostic",),
         ("KRX_AUTH_KEY",),
     ),
     ProviderSpec(
