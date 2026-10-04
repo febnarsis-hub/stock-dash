@@ -38,22 +38,37 @@ class KIS:
         self.expires = 0
 
     def request(self, method, path, **kwargs):
+        stage = '인증' if path == '/oauth2/tokenP' else '잔고 조회'
         try:
             response = requests.request(method, self.base + path, timeout=(5, 20), **kwargs)
             response.raise_for_status()
+        except requests.HTTPError as error:
+            status = error.response.status_code if error.response is not None else '확인 필요'
+            raise BrokerError(f'KIS {stage} HTTP {status} 오류입니다. 실전·모의 환경과 API 신청 상태를 확인하세요.') from None
+        except requests.Timeout:
+            raise BrokerError(f'KIS {stage} 응답 시간이 초과되었습니다. 잠시 후 다시 조회하세요.') from None
+        except requests.RequestException:
+            raise BrokerError(f'KIS {stage} 서버에 연결하지 못했습니다. 배포 서버의 네트워크 상태를 확인하세요.') from None
+        try:
             data = response.json()
             if not isinstance(data, dict):
                 raise ValueError()
             return response, data
-        except (requests.RequestException, ValueError):
-            raise BrokerError('증권사 연결에 실패했습니다. 환경·키·서비스 상태를 확인한 뒤 다시 조회하세요.') from None
+        except ValueError:
+            raise BrokerError(f'KIS {stage} 응답 형식이 예상과 다릅니다. HTTP {response.status_code}.') from None
+
+    @staticmethod
+    def error_code(data):
+        # KIS messages may contain account details; expose only a short diagnostic code.
+        code = str(data.get('msg_cd', ''))
+        return code if re.fullmatch(r'[A-Za-z0-9_-]{1,24}', code) else '확인 필요'
 
     def authorize(self):
         if self.token and time.time() < self.expires:
             return
         _, data = self.request('POST', '/oauth2/tokenP', json={'grant_type': 'client_credentials', 'appkey': self.key, 'appsecret': self.secret})
         if not data.get('access_token'):
-            raise BrokerError('증권사 인증에 실패했습니다. 실전·모의 키가 선택 환경과 같은지 확인하세요.')
+            raise BrokerError(f'KIS 인증 실패 (오류 코드 {self.error_code(data)}). 실전·모의 키와 앱 등록 상태를 확인하세요.')
         self.token = data['access_token']
         self.expires = time.time() + max(0, amount(data.get('expires_in', 0)) - 120)
 
@@ -70,7 +85,7 @@ class KIS:
                         'INQR_DVSN': '02', 'UNPR_DVSN': '01', 'FUND_STTL_ICLD_YN': 'N',
                         'FNCG_AMT_AUTO_RDPT_YN': 'N', 'PRCS_DVSN': '00', 'CTX_AREA_FK100': fk, 'CTX_AREA_NK100': nk})
             if str(data.get('rt_cd')) != '0':
-                raise BrokerError('잔고 조회가 승인되지 않았습니다. 계좌·상품코드와 API 신청 상태를 확인하세요.')
+                raise BrokerError(f'KIS 잔고 조회 거부 (오류 코드 {self.error_code(data)}). 계좌·상품코드와 API 신청 상태를 확인하세요.')
             if not isinstance(data.get('output1'), list) or not isinstance(data.get('output2'), list):
                 raise BrokerError('잔고 응답 형식이 달라 조회를 중단했습니다.')
             rows.extend(data['output1'])
